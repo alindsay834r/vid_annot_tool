@@ -1,2 +1,2 @@
 # vid_annot_tool
-python tool to annotate and save videos
+python tool to annotate video frames
