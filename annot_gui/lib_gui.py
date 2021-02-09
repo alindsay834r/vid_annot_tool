@@ -525,7 +525,7 @@ class AnnotGUI():
 				# add stop frame entry box, default to last frame
 				self.ent_stop_val = tk.Entry(frame_ssframe,width=round(rmenu2w/2))
 				self.ent_stop_val.pack(side=tk.LEFT, expand=False)
-				self.ent_stop_val.insert(0,self.nframe+2)
+				self.ent_stop_val.insert(0,self.nframe)
 				# add save vid button
 				btn_savev = tk.Button(self.rmenu2, text="Save Vid mp4", width=rmenu2w, command=self.savv)
 				btn_savev.pack(anchor=tk.CENTER, expand=False)
@@ -546,8 +546,7 @@ class AnnotGUI():
 		self.ovid = cv2.VideoWriter(ovfpath,fourcc, self.fps, self.vsize)
 		# create input VideoCapture object
 		self.cap2 = cv2.VideoCapture(self.ivfpath)
-		# initialize frame id
-		l_iframe = -1
+		# get number frames
 		l_nframe = int(self.cap2.get(cv2.CAP_PROP_FRAME_COUNT))
 		# make copy of annoitations list so it doesn't get changed mid save
 		l_disp_annot_flag = self.disp_annot_flag
@@ -560,18 +559,18 @@ class AnnotGUI():
 		except ValueError: 
 			print('start/stop frame invalid')
 			return
-		if istart<-1 or istop<-1:
-			print('start/stop frame invalid')
-			return
 		if istop<istart:
 			print('start frame exceeds stop frame')
 			return
-		if istop>l_nframe+2:
+		if istart<1:
+			print('start/stop frame invalid')
+			return
+		if istop>l_nframe:
 			print('stop frame exceeds EOF')
 			return
 		# set self.cap2 to start frame
-		l_iframe = istart-2
-		self.cap2.set(1,l_iframe+1)
+		l_iframe = istart
+		self.cap2.set(1,l_iframe)
 		# loop through frames, drawing annotations and saving
 		while self.cap2.isOpened() and l_iframe<=istop:
 			# read next frame
