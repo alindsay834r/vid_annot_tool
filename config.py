@@ -23,5 +23,7 @@ annot_box_size = 50
 #[label, display on/off, annot color]
 # color options = ['Red','Orange','Yellow','Green','Cyan','Blue','Purple','Magenta','Black','White']
 # if a label is not listed, it will default to display-on/red
-default_label_sel = [['navyshirt',True,'Blue'], 
-					 ['greenshirt',False,'Green']]
+#EXAMPLE
+#default_label_sel = [['navyshirt',True,'Blue'], 
+#					 ['greenshirt',False,'Green']]
+default_label_sel = []
