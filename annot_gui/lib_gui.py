@@ -2,21 +2,21 @@
 # This file is subject to the terms and conditions defined in
 # file 'LICENSE.txt', which is part of this source code package.
 #
-# Author: alinsday834r (alinsday834r@gmail.com, @alinsday834r)
-# Date: 2021_02_07
-# Version: 1.0
+# History (when, who, what):
+# 20210208, alindsay834r, initial release
 #
 # lib_gui.py
 # Given a window, builds GUI and updates GUI inside.
 #
 
+import os
+from pathlib import Path
+import cv2
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import simpledialog
 from tkinter import messagebox
 from PIL import Image, ImageTk
-import cv2
-import os
 import pandas as pd
 
 import annot_gui.lib_annot as la
@@ -51,7 +51,6 @@ class AnnotGUI():
 		self.sframe_label_sel = None
 		self.rb_label_sel_var = tk.StringVar(self.window,'NEW TARGET')
 		self.disp_annot_flag = 1
-		self.verify_ow_flag = config.verify_ow_flag
 		# init save vid variables
 		self.cap2 = None
 		self.ovid = None
@@ -87,11 +86,11 @@ class AnnotGUI():
 		self.rmenu1.pack(expand=False, side=tk.LEFT, anchor=tk.N)
 		# add main menu title
 		label_mainmenu1 = tk.Label(self.rmenu1,text='MAIN MENU',font='bold',width=self.rmenu1w)
-		label_mainmenu1.pack(anchor=tk.CENTER, expand=False)	
+		label_mainmenu1.pack(anchor=tk.CENTER, expand=False)
 		# add load video button and key binding
-		btn_loadv = tk.Button(self.rmenu1, text="Load Video (l)", width=self.rmenu1w, command=self.loadv)
+		btn_loadv = tk.Button(self.rmenu1, text="Load Video (v)", width=self.rmenu1w, command=self.loadv)
 		btn_loadv.pack(anchor=tk.CENTER, expand=False)
-		self.window.bind('l',self.loadv)
+		self.window.bind('v',self.loadv)
 		# add key bindings
 		self.window.bind('<Escape>',lambda x: self.window.destroy())
 		self.window.bind('q',lambda x: self.window.destroy())
@@ -168,11 +167,11 @@ class AnnotGUI():
 	# prompt user for path, load video
 	def loadv(self,event=None):
 		# get input video path
-		new_ivfpath = filedialog.askopenfilename(initialdir = config.default_vpath)
+		new_ivfpath = filedialog.askopenfilename(initialdir = config.default_ivfdir)
 		# verify path exists
-		if os.path.isfile(new_ivfpath):
+		if len(new_ivfpath)>0:
 			self.ivfpath = new_ivfpath
-			print('loading '+self.ivfpath)
+			print('Loading '+self.ivfpath)
 			# if video currently open, close it
 			if self.cap is not None:
 				if self.cap.isOpened():
@@ -204,8 +203,8 @@ class AnnotGUI():
 			# set window title to name of file
 			self.window.title(os.path.basename(self.ivfpath)+ \
 				', frame {} of {}'.format(self.iframe+2,self.nframe))
-			# if annotation file exists, load it
-			self.iafpath = os.path.splitext(self.ivfpath)[0]+'.csv'
+			# if annotation file exists on default path, load it
+			self.iafpath = config.default_iafdir+Path(self.ivfpath).stem+'.csv'
 			if os.path.isfile(self.iafpath):
 				self.annotations_list = la.load_annotations_csv(self.iafpath)
 			# otherwise init to empty list
@@ -222,13 +221,38 @@ class AnnotGUI():
 			self.mainmenugui2()
 			# open annot menu
 			self.annotmenugui()
-		else:
-			print(new_ivfpath+' could not be loaded')
+
+	# load annotations CSV file
+	# note this function does not verify the annots file actually belongs to the video file
+	def loada(self,event=None):
+		# user verify if overwriting existing file
+		if (len(self.annotations_list)>0):
+			ask_ow_annots = messagebox.askokcancel('Overwriting Annotation!', \
+				'Are you sure you want to overwrite the annotations currently in memory?')
+			if ask_ow_annots is False:
+				return
+		# get input annotation file path
+		iafpath = filedialog.askopenfilename(initialdir = config.default_iafdir)
+		# verify path exists
+		if len(iafpath)>0:
+			self.annotations_list = la.load_annotations_csv(iafpath)
+			# if annot menu is open, close it (to clear out)
+			if self.annotgui_flag is 1:
+				self.close_annotmenu()
+				self.annot_menu_label_sel = list()
+			# open annot menu
+			self.annotmenugui()
 
 	# save annotations to CSV file
 	def sava(self,event=None):
 		if (len(self.annotations_list)>0) and (self.iafpath is not None):
-			la.save_annotations_csv(self.annotations_list,self.iafpath,self.verify_ow_flag)
+			initfilename = Path(self.iafpath).stem+'.csv'
+			oafpath = filedialog.asksaveasfilename(initialdir=config.default_odir, \
+				initialfile=initfilename,filetypes=[('csv file','*.csv')],confirmoverwrite=True)
+			if len(oafpath)==0:
+				print('cancelled save')
+				return
+			la.save_annotations_csv(self.annotations_list,oafpath)
 
 	# toggle play/pause video flag
 	def ppv(self,event=None):
@@ -339,7 +363,8 @@ class AnnotGUI():
 													self.nframe, \
 													self.annotations_list, \
 													self.label_list, \
-													self.annot_menu_label_sel)
+													self.annot_menu_label_sel, \
+													config.annot_box_size)
 					# convert to RGB
 					self.frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
 					# convert to PIL format
@@ -479,7 +504,7 @@ class AnnotGUI():
 				self.rmenu2.pack(expand=False, side=tk.LEFT, anchor=tk.N)
 				# add save menu label
 				label_savvmenu = tk.Label(self.rmenu2,text='SAVE VID MENU',font='bold',width=rmenu2w)
-				label_savvmenu.pack(side=tk.LEFT, expand=False)	
+				label_savvmenu.pack(anchor=tk.CENTER, expand=False)	
 				# add enter name label
 				label_savvname = tk.Label(self.rmenu2,text='Output File Label',width=rmenu2w)
 				label_savvname.pack(anchor=tk.CENTER, expand=False)
@@ -502,7 +527,7 @@ class AnnotGUI():
 				self.ent_stop_val.pack(side=tk.LEFT, expand=False)
 				self.ent_stop_val.insert(0,self.nframe+2)
 				# add save vid button
-				btn_savev = tk.Button(self.rmenu2, text="Save", width=rmenu2w, command=self.savv)
+				btn_savev = tk.Button(self.rmenu2, text="Save Vid mp4", width=rmenu2w, command=self.savv)
 				btn_savev.pack(anchor=tk.CENTER, expand=False)
 			# if savv menu is open, close it
 			elif self.savvgui_flag is -1:
@@ -510,19 +535,15 @@ class AnnotGUI():
 
 	# Save annotated movie
 	def savv(self):
-		self.ovfpath = os.path.splitext(self.ivfpath)[0]+'_'+self.ent_savvname.get()+'.mp4'
-		print('Saving '+ self.ovfpath)
-		# user verify if overwriting existing file
-		if (self.verify_ow_flag is True) and (os.path.isfile(self.ovfpath)):
-			ask_ow_file = messagebox.askokcancel('File Already Exists','Overwrite existing file?')
-			if ask_ow_file is False:
-				print('cancelled save')
-				return
-			else:
-				print('overwriting existing file')
+		initfilename = Path(self.ivfpath).stem+'_'+self.ent_savvname.get()+'.mp4'
+		ovfpath = filedialog.asksaveasfilename(initialdir=config.default_odir, \
+			initialfile=initfilename,filetypes=[('mp4 file','*.mp4')],confirmoverwrite=True)
+		if len(ovfpath)==0:
+			return
+		print('Saving '+ ovfpath)
 		# create output VideoCapture object
 		fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-		self.ovid = cv2.VideoWriter(self.ovfpath,fourcc, self.fps, self.vsize)
+		self.ovid = cv2.VideoWriter(ovfpath,fourcc, self.fps, self.vsize)
 		# create input VideoCapture object
 		self.cap2 = cv2.VideoCapture(self.ivfpath)
 		# initialize frame id
@@ -564,7 +585,8 @@ class AnnotGUI():
 													l_nframe, \
 													l_annotations_list, \
 													l_label_list, \
-													self.annot_menu_label_sel)
+													self.annot_menu_label_sel, \
+													config.annot_box_size)
 				self.ovid.write(l_frame_annot)
 			# increment frame id
 			l_iframe = l_iframe+1
@@ -602,20 +624,23 @@ class AnnotGUI():
 			# if savv menu is not open, open it and toggle flag
 			if self.annotgui_flag is 1:
 				self.btn_annot_toggle['text']='<'
-				# create right sidebar
+				# create annots menu frame inside right sidebar
 				rmenu3w = 15
 				self.rmenu3 = tk.Frame(self.rbar, width=rmenu3w)
 				self.rmenu3.pack(expand=False, side=tk.LEFT, anchor=tk.N)
-				# add UI elements to right sidebar and matching key bindings
-				frame_cannotmenu_label = tk.Frame(self.rmenu3, width=rmenu3w)
-				frame_cannotmenu_label.pack(anchor=tk.CENTER, expand=False)
-				label_cannotmenu = tk.Label(frame_cannotmenu_label,text='ANNOTS MENU',font='bold',width=rmenu3w)
-				label_cannotmenu.pack(side=tk.LEFT, expand=False)
-				# add scrollable label list with selectable options
-				self.update_rb_tgt_sel()
-				# save annotations
-				btn_sava = tk.Button(self.rmenu3, text="Save Annot csv (s)", width=rmenu3w, command=self.sava)
+				# add menu label
+				label_cannotmenu = tk.Label(self.rmenu3,text='ANNOTS MENU',font='bold',width=rmenu3w)
+				label_cannotmenu.pack(anchor=tk.CENTER, expand=False)
+				# add load video button and key binding
+				btn_loada = tk.Button(self.rmenu3, text="Load Annots (a)", width=self.rmenu1w, command=self.loada)
+				btn_loada.pack(anchor=tk.CENTER, expand=False)
+				self.window.bind('a',self.loada)
+				# add save annotations button
+				btn_sava = tk.Button(self.rmenu3, text="Save Annot csv", width=rmenu3w, command=self.sava)
 				btn_sava.pack(anchor=tk.CENTER, expand=False)
+				# add scrollable label list with selectable options
+				# needs to be last or when called it reorders the menu elements
+				self.update_rb_tgt_sel()
 			elif self.annotgui_flag is -1:
 				self.close_annotmenu()
 
@@ -642,9 +667,17 @@ class AnnotGUI():
 		self.annot_menu_label_sel = list()
 		# add labels to scrollable list
 		for label in label_list:
-			# set default selections
+			# set none-specified default selections
 			displayflag = True
 			colortxt = 'Red'
+			# look in config file for specified default selections
+			if len(config.default_label_sel)>0:
+				default_label_sel_df =  pd.DataFrame(config.default_label_sel,columns=['label','rb_disp','color'])
+				imatch = default_label_sel_df.index[default_label_sel_df['label']==label].tolist()
+				if len(imatch)>0:
+					# get display flag and color of label
+					displayflag = config.default_label_sel[imatch[0]][1]
+					colortxt = config.default_label_sel[imatch[0]][2]
 			# look for previous label selections for current target
 			if len(prev_annot_menu_label_sel)>0:
 				# find current label in label_sel
@@ -667,9 +700,9 @@ class AnnotGUI():
 			# otherwise, add disp radio button, and color select dropdown
 			else:
 				# create disp annot radio variable, default to on
-				rb_disp_var = tk.BooleanVar(self.window,'1')
+				rb_disp_var = tk.BooleanVar(self.window,displayflag)
 				# add disp annot radio button, attached to the variable
-				rb_disp = tk.Checkbutton(frame,variable=rb_disp_var,indicatoron=displayflag)
+				rb_disp = tk.Checkbutton(frame,variable=rb_disp_var,indicatoron=True)
 				rb_disp.pack(side=tk.LEFT, expand=False)
 				# define color options list
 				color_options = ['Red','Orange','Yellow','Green','Cyan','Blue','Purple','Magenta','Black','White']

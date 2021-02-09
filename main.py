@@ -2,9 +2,8 @@
 # This file is subject to the terms and conditions defined in
 # file 'LICENSE.txt', which is part of this source code package.
 #
-# Author: alinsday834r (alinsday834r@gmail.com, @alinsday834r)
-# Date: 2021_02_07
-# Version: 1.0
+# History (when, who, what):
+# 20210208, alindsay834r, initial release
 #
 # main.py
 # Main executable.  Creates primary GUI window and passes 

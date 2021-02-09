@@ -2,9 +2,8 @@
 # This file is subject to the terms and conditions defined in
 # file 'LICENSE.txt', which is part of this source code package.
 #
-# Author: alinsday834r (alinsday834r@gmail.com, @alinsday834r)
-# Date: 2021_02_07
-# Version: 1.0
+# History (when, who, what):
+# 20210208, alindsay834r, initial release
 #
 # lib_annot.py
 # Functions for managing and drawing annotations.
@@ -18,16 +17,8 @@ import pandas as pd
 import csv
 
 # save annotations list to csv
-def save_annotations_csv(annotations_list,afpath,verify_ow_flag):
+def save_annotations_csv(annotations_list,afpath):
 	print('Saving '+afpath)
-	# user verify if overwriting existing file
-	if (verify_ow_flag is True) and (os.path.isfile(afpath)):
-		ask_ow_file = messagebox.askokcancel('File Already Exists','Overwrite existing file?')
-		if ask_ow_file is False:
-			print('cancelled save')
-			return
-		else:
-			print('overwriting existing file')
 	# open annotation file
 	fp = open(afpath,'w')
 	# write annotations to file
@@ -54,7 +45,7 @@ def load_annotations_csv(afpath):
 	return annotations_list
 
 # define function to draw annotations on image
-def draw_annotations(disp_annot_flag,frame,iFrame,nFrames,annotations_list,label,label_sel):
+def draw_annotations(disp_annot_flag,frame,iFrame,nFrames,annotations_list,label,label_sel,annot_box_size):
 	# write annotations on frame
 	if disp_annot_flag is 1:
 		# write frame number on frame
@@ -127,7 +118,7 @@ def draw_annotations(disp_annot_flag,frame,iFrame,nFrames,annotations_list,label
 											round(np.interp(iFrame,ip,yp)))
 							interp_marker = '*' # indicates current frame is interpolated position
 					# set annotation box size
-					hwbox = 50
+					hwbox = annot_box_size
 					# compute annotation box corner positions
 					start_point = (max(center_point[0]-hwbox,0),max(center_point[1]-hwbox,0))
 					end_point = (max(center_point[0]+hwbox,0),max(center_point[1]+hwbox,0))

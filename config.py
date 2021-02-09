@@ -2,15 +2,26 @@
 # This file is subject to the terms and conditions defined in
 # file 'LICENSE.txt', which is part of this source code package.
 #
-# Author: alinsday834r (alinsday834r@gmail.com, @alinsday834r)
-# Date: 2021_02_07
-# Version: 1.0
+# History (when, who, what):
+# 20210208, alindsay834r, initial release
 #
 # config.py
 # vid_annot_tool configuration parameters
 #
 
-# default path in load video function
-default_vpath = '../../data/'
-# verify file overwrite flag
-verify_ow_flag = True
+# default input video file path
+default_ivfdir = './'
+# default input annotations path
+default_iafdir = './'
+# default output path
+default_odir = './'
+
+# annotation box size
+annot_box_size = 50
+
+# label specific settings
+#[label, display on/off, annot color]
+# color options = ['Red','Orange','Yellow','Green','Cyan','Blue','Purple','Magenta','Black','White']
+# if a label is not listed, it will default to display-on/red
+default_label_sel = [['navyshirt',True,'Blue'], 
+					 ['greenshirt',False,'Green']]
